@@ -1,10 +1,10 @@
 # Hermes Quant
 
-Phase 0 and Phase 1 of the research-first paper-trading platform described in the system design document.
+Phases 0 through 4 of the research-first paper-trading platform described in the system design document.
 
 ## Scope
 
-This slice contains the repository foundation and a fail-closed OpenBB daily OHLCV ingestion path. It does not include features, models, Hermes, risk, paper execution, or learning.
+This slice contains the repository foundation, fail-closed OpenBB daily OHLCV ingestion, technical features, a walk-forward return model, regime/risk models, and deterministic risk controls. It does not include Hermes tool integration, paper execution, or learning.
 
 The ingestion contract is:
 
@@ -22,3 +22,7 @@ ruff format --check .
 ```
 
 Start the local TimescaleDB service with `docker compose up -d postgres`.
+
+## Kill switch status
+
+The deterministic risk engine accepts `kill_switch_active` as explicit portfolio state and fails closed when it is true. Automatic triggering and persistence are deferred until the portfolio-state and observability workflows are implemented. The future trigger sources are the daily loss limit, repeated Phase 1 data-validation failures, and a configured maximum-drawdown threshold.
