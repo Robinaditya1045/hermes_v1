@@ -32,3 +32,7 @@ The deterministic risk engine accepts `kill_switch_active` as explicit portfolio
 The orchestrator deduplication key is a SHA-256 hash of the validated Hermes decision plus the exact price, volatility, and volume inputs. This is an explicit V1 limitation: a retry with changed market inputs is treated as a new execution context. A future market-session identity can narrow this behavior after the scheduler and market-session model exist.
 
 `unexpected_position_state` is an untested-reconciliation placeholder, not a completed reconciliation system. The eventual implementation must reconcile persisted orders and fills against the expected portfolio state before setting this trigger automatically.
+
+## Technical debt
+
+See the canonical [technical debt register](docs/technical_debt.md). Any deliberate scope-deferral decision must be logged there when it is made, not retroactively. This includes the kill-switch and deduplication decisions made during Phases 4 through 7.
