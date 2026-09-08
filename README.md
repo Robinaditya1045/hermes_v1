@@ -36,3 +36,7 @@ The orchestrator deduplication key is a SHA-256 hash of the validated Hermes dec
 ## Technical debt
 
 See the canonical [technical debt register](docs/technical_debt.md). Any deliberate scope-deferral decision must be logged there when it is made, not retroactively. This includes the kill-switch and deduplication decisions made during Phases 4 through 7.
+
+## Hermes observation harness
+
+The standalone manual validation harness is documented in [docs/hermes_validation_harness.md](docs/hermes_validation_harness.md). It does not connect to the Phase 7 orchestrator or any unattended loop.
