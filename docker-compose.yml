@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: hermes-quant-postgres
+    environment:
+      POSTGRES_DB: hermes_quant
+      POSTGRES_USER: hermes
+      POSTGRES_PASSWORD: hermes_local_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hermes -d hermes_quant"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
