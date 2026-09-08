@@ -1,10 +1,10 @@
 # Hermes Quant
 
-Phases 0 through 4 of the research-first paper-trading platform described in the system design document.
+Phases 0 through 7 of the research-first paper-trading platform described in the system design document.
 
 ## Scope
 
-This slice contains the repository foundation, fail-closed OpenBB daily OHLCV ingestion, technical features, a walk-forward return model, regime/risk models, and deterministic risk controls. It does not include Hermes tool integration, paper execution, or learning.
+This slice contains the repository foundation, fail-closed OpenBB daily OHLCV ingestion, technical features, a walk-forward return model, regime/risk models, deterministic risk controls, read-only Hermes integration, paper execution, and the isolated Hermes-to-experience orchestrator. It does not include a scheduled/live agent loop.
 
 The ingestion contract is:
 
@@ -25,4 +25,10 @@ Start the local TimescaleDB service with `docker compose up -d postgres`.
 
 ## Kill switch status
 
-The deterministic risk engine accepts `kill_switch_active` as explicit portfolio state and fails closed when it is true. Automatic triggering and persistence are deferred until the portfolio-state and observability workflows are implemented. The future trigger sources are the daily loss limit, repeated Phase 1 data-validation failures, and a configured maximum-drawdown threshold.
+The deterministic risk engine accepts `kill_switch_active` as explicit portfolio state and fails closed when it is true. Phase 7 adds automatic trigger evaluation and crash-durable `TRADING_HALTED` persistence at the orchestrator boundary. Manual reset is required after a halt.
+
+## Phase 7 safety notes
+
+The orchestrator deduplication key is a SHA-256 hash of the validated Hermes decision plus the exact price, volatility, and volume inputs. This is an explicit V1 limitation: a retry with changed market inputs is treated as a new execution context. A future market-session identity can narrow this behavior after the scheduler and market-session model exist.
+
+`unexpected_position_state` is an untested-reconciliation placeholder, not a completed reconciliation system. The eventual implementation must reconcile persisted orders and fills against the expected portfolio state before setting this trigger automatically.
