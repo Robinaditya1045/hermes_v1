@@ -27,10 +27,12 @@ class PortfolioRiskState:
 @dataclass(frozen=True)
 class RiskProposal:
     symbol: str
+    decision_id: str
     price: float
     requested_quantity: float
     estimated_volatility: float
     average_daily_volume: float
+    action: str = "BUY"
 
 
 @dataclass(frozen=True)
@@ -39,6 +41,10 @@ class RiskDecision:
     approved_quantity: float
     approved_notional: float
     reason: str
+    decision_id: str | None = None
+    risk_code: str | None = None
+    symbol: str | None = None
+    action: str | None = None
 
 
 def _is_invalid_number(value: float) -> bool:
@@ -69,15 +75,50 @@ def evaluate_proposal(
         config.horizon_factor,
     )
     if any(_is_invalid_number(value) for value in numeric_inputs):
-        return RiskDecision(False, 0.0, 0.0, "invalid_input")
+        return RiskDecision(
+            False,
+            0.0,
+            0.0,
+            "invalid_input",
+            decision_id=proposal.decision_id,
+            risk_code="INVALID_INPUT",
+        )
     if portfolio.kill_switch_active:
-        return RiskDecision(False, 0.0, 0.0, "kill_switch_active")
+        return RiskDecision(
+            False,
+            0.0,
+            0.0,
+            "kill_switch_active",
+            decision_id=proposal.decision_id,
+            risk_code="KILL_SWITCH",
+        )
     if portfolio.daily_pnl <= -abs(config.max_daily_loss):
-        return RiskDecision(False, 0.0, 0.0, "daily_loss_limit")
+        return RiskDecision(
+            False,
+            0.0,
+            0.0,
+            "daily_loss_limit",
+            decision_id=proposal.decision_id,
+            risk_code="DAILY_LOSS",
+        )
     if proposal.price <= 0 or proposal.requested_quantity <= 0:
-        return RiskDecision(False, 0.0, 0.0, "invalid_order")
+        return RiskDecision(
+            False,
+            0.0,
+            0.0,
+            "invalid_order",
+            decision_id=proposal.decision_id,
+            risk_code="INVALID_ORDER",
+        )
     if proposal.estimated_volatility > config.max_volatility:
-        return RiskDecision(False, 0.0, 0.0, "volatility_limit")
+        return RiskDecision(
+            False,
+            0.0,
+            0.0,
+            "volatility_limit",
+            decision_id=proposal.decision_id,
+            risk_code="VOLATILITY",
+        )
 
     remaining_portfolio = max(
         0.0,
@@ -99,10 +140,25 @@ def evaluate_proposal(
     approved_notional = min(requested_notional, *constraints.values())
     approved_quantity = approved_notional / proposal.price
     if approved_quantity <= 0:
-        return RiskDecision(False, 0.0, 0.0, "exposure_limit")
+        return RiskDecision(
+            False,
+            0.0,
+            0.0,
+            "exposure_limit",
+            decision_id=proposal.decision_id,
+            risk_code="EXPOSURE",
+        )
     if approved_quantity >= proposal.requested_quantity:
         reason = "approved"
     else:
         binding_constraint = min(constraints, key=constraints.get)
         reason = f"resized_by_{binding_constraint}"
-    return RiskDecision(True, approved_quantity, approved_notional, reason)
+    return RiskDecision(
+        True,
+        approved_quantity,
+        approved_notional,
+        reason,
+        decision_id=proposal.decision_id,
+        symbol=proposal.symbol,
+        action=proposal.action,
+    )

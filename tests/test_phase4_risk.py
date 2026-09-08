@@ -19,13 +19,14 @@ OUTCOME_AT = datetime(2027, 1, 1, 20, 0, tzinfo=timezone.utc)
 
 def proposal(
     *,
+    decision_id: str = "risk-decision-1",
     price: float = 100.0,
     requested_quantity: float = 10.0,
     estimated_volatility: float = 0.10,
     average_daily_volume: float = 1_000.0,
 ) -> RiskProposal:
     return RiskProposal(
-        "AAPL", price, requested_quantity, estimated_volatility, average_daily_volume
+        "AAPL", decision_id, price, requested_quantity, estimated_volatility, average_daily_volume
     )
 
 
@@ -131,6 +132,7 @@ def test_daily_loss_limit_rejects_exactly() -> None:
     assert decision.approved is False
     assert decision.approved_quantity == 0.0
     assert decision.reason == "daily_loss_limit"
+    assert decision.decision_id == "risk-decision-1"
 
 
 def test_kill_switch_rejects_exactly() -> None:
