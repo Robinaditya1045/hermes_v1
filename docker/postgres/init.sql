@@ -57,3 +57,31 @@ CREATE TABLE IF NOT EXISTS fills (
     fill_model_config JSONB NOT NULL,
     occurred_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS trade_experience (
+    trade_id TEXT PRIMARY KEY,
+    decision_id TEXT NOT NULL UNIQUE,
+    decision_time TIMESTAMPTZ NOT NULL,
+    asset TEXT NOT NULL,
+    market_state_version TEXT NOT NULL,
+    feature_version TEXT NOT NULL,
+    model_versions JSONB NOT NULL,
+    hermes_model TEXT NOT NULL,
+    hermes_prompt_version TEXT NOT NULL,
+    action TEXT NOT NULL,
+    confidence DOUBLE PRECISION NOT NULL,
+    risk_decision TEXT NOT NULL,
+    approved_quantity DOUBLE PRECISION NOT NULL,
+    entry_price DOUBLE PRECISION,
+    exit_price DOUBLE PRECISION,
+    fees DOUBLE PRECISION NOT NULL,
+    slippage DOUBLE PRECISION NOT NULL,
+    realized_pnl DOUBLE PRECISION,
+    net_return DOUBLE PRECISION,
+    holding_period_bars INTEGER,
+    outcome_label TEXT NOT NULL,
+    regime_at_decision TEXT,
+    post_trade_notes TEXT,
+    recorded_at TIMESTAMPTZ NOT NULL
+);
+

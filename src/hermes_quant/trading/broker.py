@@ -84,7 +84,7 @@ class SQLiteOrderStore(InMemoryOrderStore):
 
     def __init__(self, database_path: str) -> None:
         super().__init__()
-        self.connection = sqlite3.connect(database_path)
+        self.connection = sqlite3.connect(database_path, check_same_thread=False)
         self.connection.execute(
             "CREATE TABLE IF NOT EXISTS orders ("
             "order_id TEXT PRIMARY KEY, decision_id TEXT UNIQUE NOT NULL, "
@@ -179,6 +179,7 @@ class SQLiteOrderStore(InMemoryOrderStore):
             raise RuntimeError("unique decision_id constraint violated") from exc
 
     def save_transition(self, transition: OrderTransition) -> None:
+        super().save_transition(transition)
         self.connection.execute(
             "INSERT INTO order_transitions VALUES (?, ?, ?, ?)",
             (
@@ -195,6 +196,7 @@ class SQLiteOrderStore(InMemoryOrderStore):
         self.connection.commit()
 
     def save_fill(self, fill: Fill) -> None:
+        super().save_fill(fill)
         self.connection.execute(
             "INSERT INTO fills VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -210,6 +212,22 @@ class SQLiteOrderStore(InMemoryOrderStore):
             ),
         )
         self.connection.commit()
+
+    def get_transitions_by_order_id(self, order_id: str) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            "SELECT order_id, from_status, to_status, occurred_at "
+            "FROM order_transitions WHERE order_id = ?",
+            (str(order_id),),
+        ).fetchall()
+        return [
+            {
+                "order_id": r[0],
+                "from_status": r[1],
+                "to_status": r[2],
+                "occurred_at": r[3],
+            }
+            for r in rows
+        ]
 
 
 @dataclass

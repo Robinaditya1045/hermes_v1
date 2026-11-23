@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-09-09T19:56:15.746448+00:00",
+  "total_candidates": 2,
+  "candidates": [
+    {
+      "candidate_id": "cand-40840bce",
+      "target_component": "hermes_prompt",
+      "hypothesis": "High-confidence decisions suffer from single indicator spikes.",
+      "proposed_rule": "PROMPT_RULE: When proposing confidence >= 0.75, the agent must explicitly verify that recent price is above both the 20d and 50d SMAs and volatility percentile is below 80%.",
+      "status": "PROPOSED",
+      "evidence_trade_ids": [
+        "trade-oc-loss-0",
+        "trade-oc-loss-1",
+        "trade-oc-loss-2",
+        "trade-oc-loss-3"
+      ],
+      "created_at": "2026-09-09T19:56:15.739808+00:00"
+    },
+    {
+      "candidate_id": "cand-6fdea3af",
+      "target_component": "agent_skill",
+      "hypothesis": "Buying dips during risk_off or high-volatility regimes fails.",
+      "proposed_rule": "SKILL_RULE: In risk_off or high_volatility regimes, BUY proposals require explicit confirmation that 5-day return is positive, or requested_notional must be reduced by at least 50%.",
+      "status": "PROPOSED",
+      "evidence_trade_ids": [
+        "trade-regime-loss-0",
+        "trade-regime-loss-1",
+        "trade-regime-loss-2",
+        "trade-regime-loss-3",
+        "trade-regime-loss-4"
+      ],
+      "created_at": "2026-09-09T19:56:15.739815+00:00"
+    }
+  ]
+}

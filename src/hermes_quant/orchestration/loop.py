@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from uuid import UUID
 
+from hermes_quant.experience.record import TradeExperience
 from hermes_quant.hermes.schemas import HermesDecision
 from hermes_quant.risk.engine import (
     PortfolioRiskState,
@@ -81,7 +82,7 @@ class InMemoryOrchestratorStore:
         self.dedup: dict[str, OrchestratorResult] = {}
         self.halted = False
         self.halt_reason: str | None = None
-        self.experience: list[ExperienceRecord] = []
+        self.experience: list[ExperienceRecord | TradeExperience] = []
 
     def get_dedup(self, key: str) -> OrchestratorResult | None:
         return self.dedup.get(key)
@@ -97,7 +98,7 @@ class InMemoryOrchestratorStore:
         self.halted = False
         self.halt_reason = None
 
-    def save_experience(self, record: ExperienceRecord) -> None:
+    def save_experience(self, record: ExperienceRecord | TradeExperience) -> None:
         self.experience.append(record)
 
 
@@ -163,8 +164,9 @@ class SQLiteOrchestratorStore(InMemoryOrchestratorStore):
         self.connection.execute("UPDATE trading_state SET halted = 0, reason = NULL WHERE id = 1")
         self.connection.commit()
 
-    def save_experience(self, record: ExperienceRecord) -> None:
+    def save_experience(self, record: ExperienceRecord | TradeExperience) -> None:
         super().save_experience(record)
+
         self.connection.execute(
             "INSERT INTO experience VALUES (?, ?, ?, ?, ?, ?)",
             (
@@ -285,16 +287,29 @@ class Orchestrator:
             broker_result.status, decision_id, dedup_key, risk_decision, broker_result
         )
         self.store.save_dedup(dedup_key, result)
-        self.store.save_experience(
-            ExperienceRecord(
-                decision_id,
-                decision_id,
-                decision.asset,
-                decision.action,
-                broker_result.status,
-                datetime.now(timezone.utc),
-            )
+
+        fill = broker_result.fill
+        entry_price = fill.price if fill else price
+        fees = fill.fees if fill else 0.0
+        slippage = fill.slippage if fill else 0.0
+        approved_qty = fill.quantity if fill else risk_decision.approved_quantity
+
+        trade_exp = TradeExperience(
+            trade_id=decision_id,
+            decision_id=decision_id,
+            decision_time=market_data_at,
+            asset=decision.asset,
+            action=decision.action,
+            confidence=decision.confidence,
+            risk_decision="APPROVED" if risk_decision.approved else "REJECTED",
+            approved_quantity=approved_qty,
+            entry_price=entry_price,
+            fees=fees,
+            slippage=slippage,
+            outcome_label=broker_result.status,
+            recorded_at=datetime.now(timezone.utc),
         )
+        self.store.save_experience(trade_exp)
         return result
 
     def observe(self, trigger: HaltTriggerInput, *, now: datetime | None = None) -> bool:

@@ -1,0 +1,18 @@
+{
+  "batch_id": "5f5cbf84-68f0-422c-8e58-28b232708ca8",
+  "provider": "openbb-default",
+  "endpoint": "obb.equity.price.historical",
+  "request_parameters": {
+    "symbol": "SPY,AAPL,MSFT,AMZN,GOOGL,META,TSLA,NVDA,JPM,V,UNH,JNJ,WMT,PG,XOM,MA,HD,CVX,MRK,ABBV,KO,PEP,COST,AVGO,MCD,CSCO",
+    "start_date": "2020-01-01",
+    "end_date": "2024-12-31",
+    "interval": "1d"
+  },
+  "retrieved_at": "2026-09-09T19:42:44.714882+00:00",
+  "schema_version": "market_bars.v1",
+  "row_count": 32708,
+  "source_metadata": {
+    "source": "OpenBB ODP",
+    "interval": "1d"
+  }
+}

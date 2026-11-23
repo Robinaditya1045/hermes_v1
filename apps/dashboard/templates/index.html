@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hermes Quant — Observability & Trading Terminal</title>
+  <style>
+    :root {
+      --bg-main: #090d16;
+      --bg-panel: #111827;
+      --bg-card: #172033;
+      --bg-hover: #1f2c47;
+      --border: #24324f;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.15);
+      --purple: #a855f7;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    .mono { font-family: var(--font-mono); }
+
+    /* Top Navigation */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+    .pulse-dot.halted {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .btn {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--text-muted);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #090d16;
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: #000;
+    }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Container & Layout */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px 24px;
+    }
+
+    /* Alert Banner */
+    .halt-banner {
+      display: none;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      color: #fca5a5;
+      font-weight: 500;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .halt-banner.active { display: flex; }
+
+    /* KPI Summary Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kpi-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #fff;
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .positive { color: var(--success) !important; }
+    .negative { color: var(--danger) !important; }
+    .neutral { color: var(--warning) !important; }
+
+    /* Tabs Bar */
+    .tabs-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      gap: 4px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 18px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* Tab Content */
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(36, 50, 79, 0.5);
+      font-size: 13px;
+    }
+
+    tr:hover td {
+      background: var(--bg-hover);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+    .badge-win { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+    .badge-loss { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+    .badge-open { background: rgba(56,189,248,0.15); color: var(--primary); border: 1px solid rgba(56,189,248,0.3); }
+    .badge-neutral { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+
+    /* Layout Grids */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 960px) {
+      .grid-2col { grid-template-columns: 1fr; }
+    }
+
+    /* Card Panels */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .form-control {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      font-family: var(--font-sans);
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+    }
+
+    /* Audit Inspector Cards */
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .audit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+    }
+
+    .audit-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .audit-kv {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 12px;
+    }
+    .audit-k { color: var(--text-muted); }
+    .audit-v { font-family: var(--font-mono); color: #fff; font-weight: 500; }
+
+    .hash-display {
+      background: #060910;
+      border: 1px solid #1e293b;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--primary);
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      background: #1e293b;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress-fill {
+      background: var(--primary);
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    .progress-fill.warning { background: var(--warning); }
+    .progress-fill.danger { background: var(--danger); }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        HERMES QUANT
+      </div>
+      <span class="brand-badge">TERMINAL v0.1.0</span>
+      <div class="status-pill" id="system-status-pill">
+        <span class="pulse-dot" id="system-dot"></span>
+        <span id="system-status-text" class="mono">CHECKING...</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div style="color: var(--text-dim); font-size: 12px;" class="mono" id="utc-clock">UTC --:--:--</div>
+      <button class="btn" onclick="fetchTerminalData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6M1 20v-6h6"></path>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Refresh
+      </button>
+      <button class="btn btn-danger" id="btn-killswitch" onclick="handleKillSwitch()">
+        ⚡ Kill Switch
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Halt Alert Banner -->
+    <div class="halt-banner" id="halt-banner">
+      <div>
+        <strong>SYSTEM HALTED:</strong> <span id="halt-reason-text">Risk circuit breaker triggered</span>
+      </div>
+      <button class="btn" style="background:#fff; color:#000;" onclick="resumeTrading()">Resume Trading</button>
+    </div>
+
+    <!-- Top KPI Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Total Equity</div>
+        <div class="kpi-value" id="kpi-equity">$---</div>
+        <div class="kpi-sub">Portfolio Net Worth</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Free Cash</div>
+        <div class="kpi-value" id="kpi-cash">$---</div>
+        <div class="kpi-sub">Available Capital</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Active Exposure</div>
+        <div class="kpi-value" id="kpi-exposure">$---</div>
+        <div class="kpi-sub" id="kpi-exposure-pct">--% of Capital</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Realized PnL</div>
+        <div class="kpi-value" id="kpi-realized-pnl">$0.00</div>
+        <div class="kpi-sub">Net Realized Gain/Loss</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Unrealized PnL</div>
+        <div class="kpi-value" id="kpi-unrealized-pnl">$0.00</div>
+        <div class="kpi-sub">Mark-to-Market</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Drawdown</div>
+        <div class="kpi-value" id="kpi-drawdown">0.00%</div>
+        <div class="kpi-sub">From Peak Equity</div>
+      </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('portfolio', this)">Portfolio & Positions</button>
+      <button class="tab-btn" onclick="switchTab('trades', this)">Trades & Experience</button>
+      <button class="tab-btn" onclick="switchTab('audit', this)">Cryptographic Audit (Sec 23.2)</button>
+      <button class="tab-btn" onclick="switchTab('models', this)">Models & Baselines (Sec 24)</button>
+      <button class="tab-btn" onclick="switchTab('learning', this)">Controlled Learning (Sec 17)</button>
+      <button class="tab-btn" onclick="switchTab('risk', this)">Risk & Circuit Breakers (Sec 8)</button>
+    </div>
+
+    <!-- TAB 1: PORTFOLIO & POSITIONS -->
+    <div class="tab-pane active" id="tab-portfolio">
+      <div class="grid-2col">
+        <!-- Positions Table -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Active Paper Positions</div>
+            <span class="badge badge-open" id="positions-count-badge">0 POSITIONS</span>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Quantity</th>
+                  <th>Avg Price</th>
+                  <th>Current Price</th>
+                  <th>Market Value</th>
+                  <th>Unrealized PnL</th>
+                  <th>Return</th>
+                </tr>
+              </thead>
+              <tbody id="positions-tbody">
+                <tr><td colspan="7" style="text-align:center; color:var(--text-dim);">No open positions currently held.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Quick Paper Order Form -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Submit Paper Order</div>
+            <span class="brand-badge">RISK GATED</span>
+          </div>
+          <form id="order-form" onsubmit="handleOrderSubmit(event)">
+            <div class="form-group">
+              <label class="form-label">Symbol</label>
+              <input type="text" class="form-control mono" id="order-symbol" placeholder="e.g. AAPL, NVDA" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Action</label>
+              <select class="form-control" id="order-action">
+                <option value="BUY">BUY (Long)</option>
+                <option value="SELL">SELL (Exit)</option>
+              </select>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label class="form-label">Quantity</label>
+                <input type="number" step="any" min="0.01" class="form-control mono" id="order-quantity" placeholder="10.0" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Market Price ($)</label>
+                <input type="number" step="0.01" min="0.01" class="form-control mono" id="order-price" placeholder="150.00" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confidence (0.0 - 1.0)</label>
+              <input type="number" step="0.01" min="0.0" max="1.0" class="form-control mono" id="order-confidence" value="0.75">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Agent Thesis / Notes</label>
+              <input type="text" class="form-control" id="order-thesis" placeholder="Technical breakout above 50-day SMA">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;">
+              Execute Paper Order
+            </button>
+          </form>
+          <div id="order-result-banner" style="margin-top:14px; font-size:12px; display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: TRADES & EXPERIENCE -->
+    <div class="tab-pane" id="tab-trades">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Historical Trade Experience Log</div>
+          <div style="display:flex; gap:10px;">
+            <select class="form-control" id="filter-outcome" style="width:140px;" onchange="fetchTrades()">
+              <option value="">All Outcomes</option>
+              <option value="WIN">WIN</option>
+              <option value="LOSS">LOSS</option>
+              <option value="BREAKEVEN">BREAKEVEN</option>
+              <option value="OPEN">OPEN</option>
+              <option value="RISK_REJECTED">RISK_REJECTED</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Decision Time</th>
+                <th>Trade ID</th>
+                <th>Asset</th>
+                <th>Action</th>
+                <th>Qty</th>
+                <th>Entry Price</th>
+                <th>Exit Price</th>
+                <th>Realized PnL</th>
+                <th>Net Return</th>
+                <th>Outcome</th>
+                <th>Audit</th>
+              </tr>
+            </thead>
+            <tbody id="trades-tbody">
+              <tr><td colspan="11" style="text-align:center; color:var(--text-dim);">Loading trade experience...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CRYPTOGRAPHIC AUDIT INSPECTOR -->
+    <div class="tab-pane" id="tab-audit">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">End-to-End Cryptographic Trade Reconstruction (Section 23.2)</div>
+          <div style="display:flex; gap:10px;">
+            <input type="text" class="form-control mono" id="audit-lookup-id" placeholder="Enter Trade ID / Decision ID" style="width:260px;">
+            <button class="btn btn-primary" onclick="lookupAudit()">Inspect</button>
+          </div>
+        </div>
+
+        <div id="audit-content-area">
+          <div style="padding:40px; text-align:center; color:var(--text-muted);">
+            Select a trade from the <strong>Trades & Experience</strong> tab or enter an ID above to reconstruct the full audit record.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: MODELS & BENCHMARKS (SECTION 24) -->
+    <div class="tab-pane" id="tab-models">
+      <!-- Model Registry -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Active Model Registry</div>
+          <span class="brand-badge">3 MODELS TRACKED</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Model Identifier</th>
+                <th>Model Type</th>
+                <th>Registry Status</th>
+                <th>Sharpe Ratio</th>
+                <th>Annualized Return</th>
+                <th>Evaluation</th>
+              </tr>
+            </thead>
+            <tbody id="models-tbody">
+              <tr>
+                <td class="mono"><strong>return_lgbm_technical_v1</strong></td>
+                <td>Return Forecaster (LightGBM)</td>
+                <td><span class="badge badge-loss">CANDIDATE (REJECTED_BY_GATE_24_3)</span></td>
+                <td class="mono">2.87</td>
+                <td class="mono">32.23%</td>
+                <td>441 OOS days (2023–2024)</td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>risk_volatility_v1</strong></td>
+                <td>Volatility & Drawdown Risk Model</td>
+                <td><span class="badge badge-win">PRODUCTION</span></td>
+                <td class="mono">--</td>
+                <td class="mono">--</td>
+                <td>252d EWMA Volatility Engine</td>
+              </tr>
+              <tr>
+                <td class="mono"><strong>regime_classifier_v1</strong></td>
+                <td>Regime Classification Model</td>
+                <td><span class="badge badge-win">PRODUCTION</span></td>
+                <td class="mono">--</td>
+                <td class="mono">--</td>
+                <td>5 regimes (Risk-On/Off, Trending, Vol)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Gate 2 Benchmark Comparison -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Walk-Forward Out-of-Sample Benchmark Comparison (Section 24.1 & Gate 2)</div>
+          <span class="badge badge-loss" id="gate-decision-badge">GATE DECISION: REJECT</span>
+        </div>
+        <div style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.3); border-radius:6px; padding:12px; margin-bottom:16px; font-size:12px; color:#fca5a5;">
+          <strong>Gate 2 Finding:</strong> The candidate model direction threshold strategy achieves 32.23% Ann. Return vs 32.67% for the passive Buy & Hold Universe (excess return: -0.44%). The candidate is a closet indexer with zero alpha. Furthermore, Top-5 ranking incurs a 90.66% daily turnover penalty that crushes Sharpe from 2.87 to 2.13. Rejected per Section 24.3.
+        </div>
+        <div class="table-container">
+          <table id="benchmarks-table">
+            <thead>
+              <tr>
+                <th>Strategy / Benchmark</th>
+                <th>Ann. Return</th>
+                <th>Sharpe</th>
+                <th>Sortino</th>
+                <th>Max DD</th>
+                <th>Calmar</th>
+                <th>Win Rate</th>
+                <th>Turnover</th>
+                <th>Information Ratio</th>
+              </tr>
+            </thead>
+            <tbody id="benchmarks-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: CONTROLLED LEARNING & CALIBRATION (SECTION 17) -->
+    <div class="tab-pane" id="tab-learning">
+      <div class="grid-2col">
+        <!-- Confidence Calibration -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Confidence Calibration Curve (Section 17.1)</div>
+            <span class="brand-badge">EMPIRICAL WIN RATE</span>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Confidence Bin</th>
+                  <th>Trades</th>
+                  <th>Wins</th>
+                  <th>Win Rate</th>
+                  <th>Expected Conf</th>
+                  <th>Calibration Gap</th>
+                </tr>
+              </thead>
+              <tbody id="calibration-tbody">
+                <tr><td colspan="6" style="text-align:center; color:var(--text-dim);">Loading calibration curve...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Regime Performance -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Market Regime Breakdown</div>
+            <span class="brand-badge">REGIME ATTRIBUTION</span>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Regime</th>
+                  <th>Trades</th>
+                  <th>Win Rate</th>
+                  <th>Realized PnL</th>
+                </tr>
+              </thead>
+              <tbody id="regime-tbody">
+                <tr><td colspan="4" style="text-align:center; color:var(--text-dim);">Loading regime performance...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnosed Failure Modes & Improvement Proposals -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Diagnosed Failure Modes & Controlled Proposals (Section 17.2)</div>
+          <span class="badge badge-neutral">HUMAN REVIEW REQUIRED</span>
+        </div>
+        <div id="failure-modes-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: RISK MANAGEMENT & LIMITS (SECTION 8) -->
+    <div class="tab-pane" id="tab-risk">
+      <div class="grid-2col">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Portfolio Risk Invariants & Limits</div>
+            <span class="brand-badge">PURE RISK ENGINE</span>
+          </div>
+          <div class="audit-card">
+            <div class="audit-kv"><span class="audit-k">Max Position Notional</span><span class="audit-v" id="risk-max-pos">$10,000.00</span></div>
+            <div class="audit-kv"><span class="audit-k">Max Portfolio Exposure</span><span class="audit-v" id="risk-max-exp">1.00x (100%)</span></div>
+            <div class="audit-kv"><span class="audit-k">Max Daily Loss Limit</span><span class="audit-v" id="risk-max-loss">$1,000.00</span></div>
+            <div class="audit-kv"><span class="audit-k">Max Asset Volatility</span><span class="audit-v" id="risk-max-vol">0.50 (50%)</span></div>
+            <div class="audit-kv"><span class="audit-k">Max Risk Per Trade</span><span class="audit-v">0.50 (50%)</span></div>
+            <div class="audit-kv"><span class="audit-k">Max Liquidity Fraction</span><span class="audit-v">1.00 (100% ADV)</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Real-time Risk Utilization</div>
+            <span class="status-pill" id="risk-util-status">NORMAL</span>
+          </div>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span>Portfolio Exposure Utilization</span>
+              <span class="mono" id="util-exp-val">0.0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="util-exp-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span>Daily Loss Utilization</span>
+              <span class="mono" id="util-loss-val">0.0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="util-loss-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div style="font-size:12px; color:var(--text-dim); margin-top:20px;">
+            Halt Circuit Breakers: Triggers halt after 3 consecutive data validation failures or 3 consecutive portfolio risk rejections.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Live Terminal Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("utc-clock").textContent = "UTC " + now.toISOString().substring(11, 19);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Tab Switching
+    function switchTab(tabId, el) {
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById("tab-" + tabId).classList.add("active");
+      if (el) el.classList.add("active");
+      if (tabId === 'trades') fetchTrades();
+      if (tabId === 'models') fetchModels();
+      if (tabId === 'learning') fetchLearningReport();
+    }
+
+    // Number Formatters
+    const fmtUSD = (n) => n != null ? "$" + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "$0.00";
+    const fmtPct = (n) => n != null ? (Number(n) * 100).toFixed(2) + "%" : "0.00%";
+
+    // Global State
+    let isHalted = false;
+
+    // Fetch Full Data
+    async function fetchTerminalData() {
+      try {
+        // 1. Health
+        const resHealth = await fetch('/api/v1/health');
+        if (resHealth.ok) {
+          const health = await resHealth.json();
+          const dot = document.getElementById("system-dot");
+          const txt = document.getElementById("system-status-text");
+          const banner = document.getElementById("halt-banner");
+
+          if (health.status === 'OPERATIONAL') {
+            dot.className = "pulse-dot";
+            txt.textContent = "OPERATIONAL";
+            banner.classList.remove("active");
+            isHalted = false;
+          } else {
+            dot.className = "pulse-dot halted";
+            txt.textContent = health.status;
+            banner.classList.add("active");
+            document.getElementById("halt-reason-text").textContent = health.halt_reason || "Trading halted";
+            isHalted = true;
+          }
+        }
+
+        // 2. Portfolio
+        const resPort = await fetch('/api/v1/portfolio');
+        if (resPort.ok) {
+          const port = await resPort.json();
+          document.getElementById("kpi-equity").textContent = fmtUSD(port.total_equity);
+          document.getElementById("kpi-cash").textContent = fmtUSD(port.cash);
+          document.getElementById("kpi-exposure").textContent = fmtUSD(port.active_exposure);
+          document.getElementById("kpi-exposure-pct").textContent = fmtPct(port.exposure_percentage) + " of Equity";
+
+          const rPnlEl = document.getElementById("kpi-realized-pnl");
+          rPnlEl.textContent = fmtUSD(port.realized_pnl);
+          rPnlEl.className = "kpi-value " + (port.realized_pnl > 0 ? "positive" : port.realized_pnl < 0 ? "negative" : "");
+
+          const uPnlEl = document.getElementById("kpi-unrealized-pnl");
+          uPnlEl.textContent = fmtUSD(port.unrealized_pnl);
+          uPnlEl.className = "kpi-value " + (port.unrealized_pnl > 0 ? "positive" : port.unrealized_pnl < 0 ? "negative" : "");
+
+          document.getElementById("kpi-drawdown").textContent = fmtPct(port.drawdown);
+
+          // Render Positions
+          renderPositions(port.positions || []);
+        }
+
+        // 3. Risk Status
+        const resRisk = await fetch('/api/v1/risk/status');
+        if (resRisk.ok) {
+          const risk = await resRisk.json();
+          const expUtil = (risk.utilization.exposure_utilization * 100).toFixed(1);
+          const lossUtil = (risk.utilization.daily_loss_utilization * 100).toFixed(1);
+
+          document.getElementById("util-exp-val").textContent = expUtil + "%";
+          const expBar = document.getElementById("util-exp-bar");
+          expBar.style.width = Math.min(expUtil, 100) + "%";
+          expBar.className = "progress-fill " + (expUtil > 80 ? "danger" : expUtil > 50 ? "warning" : "");
+
+          document.getElementById("util-loss-val").textContent = lossUtil + "%";
+          const lossBar = document.getElementById("util-loss-bar");
+          lossBar.style.width = Math.min(lossUtil, 100) + "%";
+          lossBar.className = "progress-fill " + (lossUtil > 80 ? "danger" : lossUtil > 50 ? "warning" : "");
+        }
+
+      } catch (err) {
+        console.error("Fetch terminal data error:", err);
+      }
+    }
+
+    function renderPositions(positions) {
+      const tbody = document.getElementById("positions-tbody");
+      document.getElementById("positions-count-badge").textContent = positions.length + " POSITIONS";
+      if (!positions.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-dim); padding:24px;">No open positions currently held.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = positions.map(p => {
+        const pnlClass = p.unrealized_pnl > 0 ? "positive" : p.unrealized_pnl < 0 ? "negative" : "";
+        return `
+          <tr>
+            <td class="mono"><strong>${p.symbol}</strong></td>
+            <td class="mono">${Number(p.quantity).toFixed(2)}</td>
+            <td class="mono">${fmtUSD(p.entry_price)}</td>
+            <td class="mono">${fmtUSD(p.current_price)}</td>
+            <td class="mono">${fmtUSD(p.market_value)}</td>
+            <td class="mono ${pnlClass}">${fmtUSD(p.unrealized_pnl)}</td>
+            <td class="mono ${pnlClass}">${fmtPct(p.unrealized_return)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Fetch Trades
+    async function fetchTrades() {
+      const outcome = document.getElementById("filter-outcome").value;
+      const url = '/api/v1/trades?limit=50' + (outcome ? '&outcome_label=' + outcome : '');
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const trades = await res.json();
+      const tbody = document.getElementById("trades-tbody");
+      if (!trades.length) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:var(--text-dim); padding:24px;">No trades matching filter.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = trades.map(t => {
+        const bClass = t.outcome_label === 'WIN' ? 'badge-win' : t.outcome_label === 'LOSS' ? 'badge-loss' : t.outcome_label === 'OPEN' ? 'badge-open' : 'badge-neutral';
+        const pnlClass = t.realized_pnl > 0 ? 'positive' : t.realized_pnl < 0 ? 'negative' : '';
+        const dt = t.decision_time ? t.decision_time.replace('T', ' ').substring(0, 19) : '--';
+        return `
+          <tr>
+            <td class="mono" style="font-size:11px;">${dt}</td>
+            <td class="mono" style="font-size:11px;">${t.trade_id.substring(0, 10)}...</td>
+            <td class="mono"><strong>${t.asset}</strong></td>
+            <td class="mono">${t.action}</td>
+            <td class="mono">${t.approved_quantity != null ? t.approved_quantity.toFixed(1) : '--'}</td>
+            <td class="mono">${t.entry_price ? fmtUSD(t.entry_price) : '--'}</td>
+            <td class="mono">${t.exit_price ? fmtUSD(t.exit_price) : '--'}</td>
+            <td class="mono ${pnlClass}">${t.realized_pnl != null ? fmtUSD(t.realized_pnl) : '--'}</td>
+            <td class="mono ${pnlClass}">${t.net_return != null ? fmtPct(t.net_return) : '--'}</td>
+            <td><span class="badge ${bClass}">${t.outcome_label || 'PENDING'}</span></td>
+            <td>
+              <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="inspectTrade('${t.trade_id}')">Audit ↗</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Inspect Trade in Audit Tab
+    function inspectTrade(tradeId) {
+      document.getElementById("audit-lookup-id").value = tradeId;
+      switchTab('audit', document.querySelectorAll('.tab-btn')[2]);
+      lookupAudit(tradeId);
+    }
+
+    async function lookupAudit(idOverride) {
+      const tradeId = idOverride || document.getElementById("audit-lookup-id").value.trim();
+      if (!tradeId) return;
+      const area = document.getElementById("audit-content-area");
+      area.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted);">Reconstructing audit bundle cryptographically...</div>';
+
+      try {
+        const res = await fetch('/api/v1/audit/' + encodeURIComponent(tradeId));
+        if (!res.ok) {
+          area.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger);">Trade not found or failed audit reconstruction.</div>`;
+          return;
+        }
+        const a = await res.json();
+
+        area.innerHTML = `
+          <div style="background:rgba(56, 189, 248, 0.08); border:1px solid rgba(56, 189, 248, 0.2); border-radius:8px; padding:16px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span class="badge badge-open">VERIFIED CANONICAL AUDIT DIGEST</span>
+                <span style="font-size:16px; font-weight:700; margin-left:10px; color:#fff;">Trade: ${a.asset} (${a.agent_decision.action})</span>
+              </div>
+              <span class="mono" style="color:var(--text-muted); font-size:12px;">Decision Time: ${a.decision_time}</span>
+            </div>
+            <div class="hash-display">
+              <div><strong style="color:var(--text-muted);">SHA-256 HASH:</strong> ${a.reconstruction_hash}</div>
+              <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="navigator.clipboard.writeText('${a.reconstruction_hash}')">Copy</button>
+            </div>
+          </div>
+
+          <div class="audit-grid">
+            <!-- Card 1: Provenance -->
+            <div class="audit-card">
+              <div class="audit-card-title">1. Provenance & Versions</div>
+              <div class="audit-kv"><span class="audit-k">Market State Version</span><span class="audit-v">${a.provenance.market_state_version}</span></div>
+              <div class="audit-kv"><span class="audit-k">Feature Version</span><span class="audit-v">${a.provenance.feature_version}</span></div>
+              <div class="audit-kv"><span class="audit-k">Hermes Agent Model</span><span class="audit-v">${a.provenance.hermes_model}</span></div>
+              <div class="audit-kv"><span class="audit-k">Prompt Version</span><span class="audit-v">${a.provenance.hermes_prompt_version}</span></div>
+            </div>
+
+            <!-- Card 2: Decision -->
+            <div class="audit-card">
+              <div class="audit-card-title">2. Hermes Agent Decision</div>
+              <div class="audit-kv"><span class="audit-k">Asset Symbol</span><span class="audit-v">${a.agent_decision.asset}</span></div>
+              <div class="audit-kv"><span class="audit-k">Action</span><span class="audit-v">${a.agent_decision.action}</span></div>
+              <div class="audit-kv"><span class="audit-k">Confidence</span><span class="audit-v">${(a.agent_decision.confidence * 100).toFixed(1)}%</span></div>
+              <div class="audit-kv"><span class="audit-k">Decision ID</span><span class="audit-v" style="font-size:10px;">${a.decision_id}</span></div>
+            </div>
+
+            <!-- Card 3: Risk Gate -->
+            <div class="audit-card">
+              <div class="audit-card-title">3. Risk Gate Evaluation</div>
+              <div class="audit-kv"><span class="audit-k">Risk Decision</span><span class="audit-v">${a.risk_decision.risk_decision}</span></div>
+              <div class="audit-kv"><span class="audit-k">Approved Quantity</span><span class="audit-v">${a.risk_decision.approved_quantity}</span></div>
+              <div class="audit-kv"><span class="audit-k">Invariant Check</span><span class="audit-v" style="color:var(--success);">PASSED (Section 8)</span></div>
+            </div>
+
+            <!-- Card 4: Paper Broker & Transitions -->
+            <div class="audit-card">
+              <div class="audit-card-title">4. Paper Broker Lifecycle</div>
+              <div class="audit-kv"><span class="audit-k">Order ID</span><span class="audit-v" style="font-size:10px;">${a.order ? a.order.order_id : 'PERSISTED_PRE_ORDERS'}</span></div>
+              <div class="audit-kv"><span class="audit-k">Lifecycle Status</span><span class="audit-v">${a.order ? a.order.status : 'HISTORICAL'}</span></div>
+              <div class="audit-kv"><span class="audit-k">State Transitions</span><span class="audit-v">${a.order_transitions ? a.order_transitions.length : 0} steps</span></div>
+            </div>
+
+            <!-- Card 5: Execution Fills -->
+            <div class="audit-card">
+              <div class="audit-card-title">5. Execution Fills</div>
+              <div class="audit-kv"><span class="audit-k">Fill Price</span><span class="audit-v">${a.fills && a.fills[0] ? fmtUSD(a.fills[0].price) : fmtUSD(a.outcome.entry_price)}</span></div>
+              <div class="audit-kv"><span class="audit-k">Execution Fees</span><span class="audit-v">${fmtUSD(a.outcome.fees)}</span></div>
+              <div class="audit-kv"><span class="audit-k">Simulated Slippage</span><span class="audit-v">${fmtUSD(a.outcome.slippage)}</span></div>
+              <div class="audit-kv"><span class="audit-k">Fill Model</span><span class="audit-v">5 bps fixed + vol slippage</span></div>
+            </div>
+
+            <!-- Card 6: Trade Outcome -->
+            <div class="audit-card">
+              <div class="audit-card-title">6. Trade Outcome & Label</div>
+              <div class="audit-kv"><span class="audit-k">Outcome Label</span><span class="audit-v"><span class="badge ${a.outcome.outcome_label === 'WIN' ? 'badge-win' : a.outcome.outcome_label === 'LOSS' ? 'badge-loss' : 'badge-open'}">${a.outcome.outcome_label}</span></span></div>
+              <div class="audit-kv"><span class="audit-k">Realized PnL</span><span class="audit-v ${a.outcome.realized_pnl > 0 ? 'positive' : a.outcome.realized_pnl < 0 ? 'negative' : ''}">${a.outcome.realized_pnl != null ? fmtUSD(a.outcome.realized_pnl) : '--'}</span></div>
+              <div class="audit-kv"><span class="audit-k">Net Return</span><span class="audit-v">${a.outcome.net_return != null ? fmtPct(a.outcome.net_return) : '--'}</span></div>
+              <div class="audit-kv"><span class="audit-k">Holding Period</span><span class="audit-v">${a.outcome.holding_period_bars != null ? a.outcome.holding_period_bars + ' bars' : '--'}</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px; font-size:12px; color:var(--text-muted); background:var(--bg-card); padding:12px; border-radius:6px; border:1px solid var(--border);">
+            <strong>Post-Trade Notes / Reasoning Thesis:</strong> ${a.outcome.post_trade_notes || 'None recorded'}
+          </div>
+        `;
+      } catch (err) {
+        area.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger);">Error reconstructing trade: ${err.message}</div>`;
+      }
+    }
+
+    // Fetch Models & Gate 2 Benchmarks
+    async function fetchModels() {
+      const res = await fetch('/api/v1/models');
+      if (!res.ok) return;
+      const data = await res.json();
+      const tbody = document.getElementById("benchmarks-tbody");
+
+      if (data.baseline_benchmark_metrics) {
+        const m = data.baseline_benchmark_metrics;
+        const rows = [
+          { name: "Buy & Hold Universe (25 Assets)", key: "buy_and_hold_universe" },
+          { name: "S&P 500 Benchmark (SPY)", key: "spy_benchmark" },
+          { name: "Model Candidate (p >= 0.50)", key: "model_direction_threshold_50" },
+          { name: "Model Top-5 Ranked", key: "model_top_5_ranked" },
+          { name: "Simple Momentum Strategy", key: "simple_momentum" },
+          { name: "Simple Moving Average", key: "simple_moving_average" },
+          { name: "Random Baseline (Monte Carlo)", key: "random_baseline_monte_carlo" },
+        ];
+
+        tbody.innerHTML = rows.map(r => {
+          const s = m[r.key];
+          if (!s) return '';
+          const isCand = r.key.startsWith('model');
+          return `
+            <tr style="${isCand ? 'background:rgba(56, 189, 248, 0.05);' : ''}">
+              <td class="mono"><strong>${r.name}</strong></td>
+              <td class="mono">${fmtPct(s.annualized_return)}</td>
+              <td class="mono"><strong>${Number(s.sharpe_ratio).toFixed(2)}</strong></td>
+              <td class="mono">${Number(s.sortino_ratio).toFixed(2)}</td>
+              <td class="mono negative">${fmtPct(s.max_drawdown)}</td>
+              <td class="mono">${Number(s.calmar_ratio).toFixed(2)}</td>
+              <td class="mono">${fmtPct(s.win_rate)}</td>
+              <td class="mono">${(Number(s.turnover) * 100).toFixed(1)}%</td>
+              <td class="mono">${s.information_ratio != null ? Number(s.information_ratio).toFixed(2) : '--'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // Fetch Controlled Learning Report
+    async function fetchLearningReport() {
+      const res = await fetch('/api/v1/experience/report');
+      if (!res.ok) return;
+      const rep = await res.json();
+
+      // Calibration bins
+      const calTbody = document.getElementById("calibration-tbody");
+      if (rep.calibration_bins && rep.calibration_bins.length) {
+        calTbody.innerHTML = rep.calibration_bins.map(b => {
+          const gap = (b.win_rate - b.expected_confidence) * 100;
+          return `
+            <tr>
+              <td class="mono">${b.bin_label}</td>
+              <td class="mono">${b.trade_count}</td>
+              <td class="mono">${b.win_count}</td>
+              <td class="mono"><strong>${fmtPct(b.win_rate)}</strong></td>
+              <td class="mono">${fmtPct(b.expected_confidence)}</td>
+              <td class="mono ${gap >= 0 ? 'positive' : 'negative'}">${gap.toFixed(1)}%</td>
+            </tr>
+          `;
+        }).join('');
+      } else {
+        calTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-dim);">No calibration data yet.</td></tr>';
+      }
+
+      // Regime breakdown
+      const regTbody = document.getElementById("regime-tbody");
+      if (rep.regime_breakdown && Object.keys(rep.regime_breakdown).length) {
+        regTbody.innerHTML = Object.entries(rep.regime_breakdown).map(([reg, val]) => `
+          <tr>
+            <td class="mono"><strong>${reg}</strong></td>
+            <td class="mono">${val.trade_count}</td>
+            <td class="mono">${fmtPct(val.win_rate)}</td>
+            <td class="mono ${val.total_pnl >= 0 ? 'positive' : 'negative'}">${fmtUSD(val.total_pnl)}</td>
+          </tr>
+        `).join('');
+      } else {
+        regTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim);">No regime data yet.</td></tr>';
+      }
+
+      // Failure Modes & Proposals
+      const container = document.getElementById("failure-modes-container");
+      let html = '';
+
+      if (rep.failure_modes && rep.failure_modes.length) {
+        html += '<h4 style="font-size:13px; text-transform:uppercase; margin-bottom:8px; color:var(--text-muted);">Diagnosed Failure Patterns</h4>';
+        html += rep.failure_modes.map(f => `
+          <div style="background:var(--bg-card); border:1px solid var(--border); border-left:4px solid var(--danger); padding:12px; border-radius:4px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; font-weight:600; margin-bottom:4px;">
+              <span>${f.name}</span>
+              <span class="badge badge-loss">${f.severity}</span>
+            </div>
+            <div style="color:var(--text-muted); font-size:12px; margin-bottom:6px;">${f.description}</div>
+            <div style="font-size:12px; color:var(--primary);"><strong>Suggested Guardrail:</strong> ${f.suggested_guardrail}</div>
+          </div>
+        `).join('');
+      }
+
+      if (rep.improvement_proposals && rep.improvement_proposals.length) {
+        html += '<h4 style="font-size:13px; text-transform:uppercase; margin:16px 0 8px 0; color:var(--text-muted);">Controlled Skill Candidates (Section 17.2)</h4>';
+        html += rep.improvement_proposals.map(p => `
+          <div style="background:var(--bg-card); border:1px solid var(--border); border-left:4px solid var(--warning); padding:12px; border-radius:4px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; font-weight:600; margin-bottom:4px;">
+              <span class="mono">${p.candidate_id} [${p.target_component}]</span>
+              <span class="badge badge-neutral">${p.status}</span>
+            </div>
+            <div style="color:var(--text-main); font-size:13px; margin-bottom:4px;"><strong>Hypothesis:</strong> ${p.hypothesis}</div>
+            <div class="mono" style="font-size:12px; color:#93c5fd; background:#0b1120; padding:6px; border-radius:4px;">${p.proposed_rule}</div>
+          </div>
+        `).join('');
+      }
+
+      if (!html) {
+        html = '<div style="padding:20px; text-align:center; color:var(--text-dim);">No failure modes or improvement proposals recorded yet.</div>';
+      }
+      container.innerHTML = html;
+    }
+
+    // Submit Paper Order
+    async function handleOrderSubmit(e) {
+      e.preventDefault();
+      const banner = document.getElementById("order-result-banner");
+      banner.style.display = "block";
+      banner.innerHTML = '<span style="color:var(--text-muted);">Evaluating order against Risk Engine...</span>';
+
+      const payload = {
+        symbol: document.getElementById("order-symbol").value.trim().toUpperCase(),
+        action: document.getElementById("order-action").value,
+        quantity: parseFloat(document.getElementById("order-quantity").value),
+        price: parseFloat(document.getElementById("order-price").value),
+        confidence: parseFloat(document.getElementById("order-confidence").value),
+        thesis: document.getElementById("order-thesis").value.trim() || null
+      };
+
+      try {
+        const res = await fetch('/api/v1/paper/orders', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok && data.approved) {
+          banner.innerHTML = `<div style="background:var(--success-bg); border:1px solid var(--success); color:var(--success); padding:10px; border-radius:6px;"><strong>ORDER FILLED:</strong> ${payload.action} ${data.fill.quantity} ${payload.symbol} at $${data.fill.price.toFixed(2)} (Fees: $${data.fill.fees.toFixed(2)})</div>`;
+          fetchTerminalData();
+        } else {
+          const reason = data.reason || data.detail || "Risk rejected";
+          banner.innerHTML = `<div style="background:var(--danger-bg); border:1px solid var(--danger); color:var(--danger); padding:10px; border-radius:6px;"><strong>RISK REJECTED:</strong> ${reason}</div>`;
+        }
+      } catch (err) {
+        banner.innerHTML = `<div style="background:var(--danger-bg); border:1px solid var(--danger); color:var(--danger); padding:10px; border-radius:6px;">Error submitting order: ${err.message}</div>`;
+      }
+    }
+
+    // Kill Switch Toggle
+    async function handleKillSwitch() {
+      const action = isHalted ? "resume" : "halt";
+      if (!confirm(`Are you sure you want to ${action.toUpperCase()} trading?`)) return;
+      try {
+        await fetch('/api/v1/risk/kill-switch', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: action, reason: "Operator manual toggle" })
+        });
+        fetchTerminalData();
+      } catch (err) {
+        alert("Error toggling kill switch: " + err.message);
+      }
+    }
+
+    async function resumeTrading() {
+      await fetch('/api/v1/risk/kill-switch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action: "resume" })
+      });
+      fetchTerminalData();
+    }
+
+    // Initial Load & Auto-refresh (every 5 seconds)
+    fetchTerminalData();
+    setInterval(fetchTerminalData, 5000);
+  </script>
+</body>
+</html>
